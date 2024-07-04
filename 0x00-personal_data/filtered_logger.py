@@ -42,10 +42,29 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
     db_name = environ.get("PERSONAL_DATA_DB_NAME")
 
     db_conn = mysql.connector.connection.MySQLConnection(user=username,
-                                                     password=password,
-                                                     host=host,
-                                                     database=db_name)
+                                                         password=password,
+                                                         host=host,
+                                                         database=db_name)
     return db_conn
+
+
+def main():
+    """
+    Main function to retrieve user data from database and log to console
+    """
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM users;")
+    field_names = [i[0] for i in cursor.description]
+
+    logger = get_logger()
+
+    for row in cursor:
+        str_row = ''.join(f'{f}={str(r)}; ' for r, f in zip(row, field_names))
+        logger.info(str_row.strip())
+
+    cursor.close()
+    db.close()
 
 
 class RedactingFormatter(logging.Formatter):

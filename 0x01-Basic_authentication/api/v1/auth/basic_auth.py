@@ -3,7 +3,7 @@
 BasicAuth class
 """
 from api.v1.auth.auth import Auth
-import base64
+from base64 import b64decode
 
 
 class BasicAuth(Auth):
@@ -27,8 +27,8 @@ class BasicAuth(Auth):
         return authorization_header.split(" ")[1]
 
     def decode_base64_authorization_header(self,
-                                           base64_authorization_header: str)
-                                           -> str:
+                                           base64_authorization_header: str
+                                           ) -> str:
         """
         returns the decoded value of a Base64
         string base64_authorization_header
@@ -40,8 +40,32 @@ class BasicAuth(Auth):
             return None
 
         try:
-            decoded = base64.b64decode(base64_authorization_header).decode
-                                      ('utf-8')
-            return decoded
-        except (ValueError, UnicodeDecodeError):
+            encoded = base64_authorization_header.encode('utf-8')
+            decoded64 = b64decode(encoded)
+            decoded = decoded64.decode('utf-8')
+        except BaseException:
             return None
+
+        return decoded
+
+    def extract_user_credentials(self,
+                                 decoded_base64_authorization_header: str
+                                 ) -> (str, str):
+        """
+        Returns the user email and password from the
+        Base64 decoded value
+        """
+        if decoded_base64_authorization_header is None:
+            return None, None
+
+        if not isinstance(decoded_base64_authorization_header, str):
+            return None, None
+
+        if ':' not in decoded_base64_authorization_header:
+            return None, None
+
+        user_credentials = decoded_base64_authorization_header.split(":")
+        user_email = user_credentials[0]
+        user_password = user_credentials[1]
+
+        return user_email, user_password

@@ -1,1 +1,1 @@
-Session authentication
+basic authentication

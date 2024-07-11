@@ -21,11 +21,16 @@ class Auth:
             return True
 
         for excluded_path in excluded_paths:
-            if not excluded_path.endswith('/'):
-                excluded_path += '/'
+            if excluded_path.endswith('*'):
+                base_path = excluded_path[:-1]
+                if path.startswith(base_path):
+                    return False
+            else:
+                if not excluded_path.endswith('/'):
+                    excluded_path += '/'
 
-            if path == excluded_path or path + '/' == excluded_path:
-                return False
+                if path == excluded_path or path + '/' == excluded_path:
+                    return False
 
         return True
 

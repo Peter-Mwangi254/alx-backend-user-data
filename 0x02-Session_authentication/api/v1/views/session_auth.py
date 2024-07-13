@@ -30,3 +30,12 @@ def auth_session() -> str:
             response.set_cookie(session_name, session_id)
             return response
     return {"error": "wrong password"}, 401
+
+@app_views.\
+    route('/auth_session/logout', methods=['DELETE'], strict_slashes=False)
+def auth_session_logout() -> str:
+    """Logout"""
+    from api.v1.app import auth
+    if auth.destroy_session(request):
+        return {}, 200
+    return {"error": "no user found"}, 404

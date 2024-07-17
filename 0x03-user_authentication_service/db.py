@@ -6,6 +6,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 from user import Base, User
+from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.orm.exc import NoResultFound
 
 VALID_FIELDS = ['id', 'email', 'hashed_password', 'session_id', 'reset_token']
 
@@ -42,7 +44,7 @@ class DB:
         self._session.commit()
         return user
 
-    def valid_query_args(self, **kwargs) -> bool
+    def valid_query_args(self, **kwargs) -> bool:
         """
         Validates query arguments
         """
@@ -52,7 +54,7 @@ class DB:
         """
         Finds a user by  keyword arguments
         """
-        if not kwargs or not valid_query_args(**kwargs):
+        if not kwargs or not self.valid_query_args(**kwargs):
             raise InvalidRequestError
         try:
             return self._session.query(User).filter_by(**kwargs).one()

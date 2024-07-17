@@ -9,8 +9,6 @@ from user import Base, User
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.orm.exc import NoResultFound
 
-VALID_FIELDS = ['id', 'email', 'hashed_password', 'session_id', 'reset_token']
-
 
 class DB:
     """DB class
@@ -19,7 +17,7 @@ class DB:
     def __init__(self) -> None:
         """Initialize a new DB instance
         """
-        self._engine = create_engine("sqlite:///a.db", echo=True)
+        self._engine = create_engine("sqlite:///a.db", echo=False)
         Base.metadata.drop_all(self._engine)
         Base.metadata.create_all(self._engine)
         self.__session = None
@@ -34,31 +32,38 @@ class DB:
         return self.__session
 
     def add_user(self, email: str, hashed_password: str) -> User:
+        """Add a user to the database
         """
-        Adds user to the database
-        """
-        if not email or not hashed_password:
-            return
         user = User(email=email, hashed_password=hashed_password)
         self._session.add(user)
         self._session.commit()
+
         return user
 
-    def valid_query_args(self, **kwargs) -> bool:
-        """
-        Validates query arguments
-        """
-        return all(field in VALID_FIELDS for field in kwargs)
-
     def find_user_by(self, **kwargs) -> User:
+        """Find a user by a given attribute
         """
-        Finds a user by  keyword arguments
-        """
-        if not kwargs or not self.valid_query_args(**kwargs):
+        if not kwargs:
             raise InvalidRequestError
-        try:
-            return self._session.query(User).filter_by(**kwargs).one()
-        except NoResultFound:
+
+        column_names = User.__table__.columns.keys()
+        for key in kwargs.keys():
+            if key not in column_names:
+                raise InvalidRequestError
+
+        user = self._session.query(User).filter_by(**kwargs).one()
+        if user is None:
             raise NoResultFound
-        except Exception as e:
-            raise InvalidRequestError from e
+        return user
+
+    def update_user(self, user_id: int, **kwargs) -> None:
+        """Update a user
+        """
+        user = self.find_user_by(id=user_id)
+        column_names = User.__table__.columns.keys()
+        for key in kwargs.keys():
+            if key not in column_names:
+                raise ValueError
+        for key, value in kwargs.items():
+            setattr(user, key, value)
+        self._session.commit()
